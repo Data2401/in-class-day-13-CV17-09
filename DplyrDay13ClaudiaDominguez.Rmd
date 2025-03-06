@@ -1,0 +1,369 @@
+---
+title: "Intro to dplyr -  Lab"
+name: "Claudia Dominguez"
+output: "html_document"
+
+---
+```{r}
+library(tidyverse)
+```
+
+
+
+
+## Dplyr practice
+
+Install the `"nycflights13"` package. Load (`library()`) the package.
+You'll also need to load `tidyverse` The data frame called `flights` should now be accessible to you.
+
+```{r}
+# install.packages("nycflights13") # once per computer 
+library(nycflights13) # every time you use it
+library(tidyverse)
+
+my_flights <- flights ## getting a copy of the data in the environment
+```
+
+
+1. Use functions to inspect it: how many rows and columns does it have? What are the names of the columns? Hint: Use `??flights` to search for documentation on the data set (for what the columns contain)
+
+```{r}
+library(nycflights13)
+
+dim(flights)
+
+colnames(flights)
+
+names(flights)
+
+??flights
+
+```
+
+
+2. Use `dplyr` to give the data frame a new column that is the amount of time gained or lost while flying (that is: how much of the delay arriving occurred during flight, as opposed to before departing).
+
+```{r}
+library(nycflights13)
+library(dplyr)
+
+flights <- flights %>%
+  mutate(time_gained = arr_delay - dep_delay)
+
+head(flights)
+
+```
+
+
+
+3. Use `dplyr` to sort your data frame in descending order by the column you just created. Remember to save this as a variable (or in the same one!)
+
+```{r}
+library(nycflights13)
+library(dplyr)
+
+flights_sorted <- flights %>%
+  mutate(time_gained = arr_delay - dep_delay) %>%
+  arrange(desc(time_gained))
+
+head(flights_sorted)
+
+```
+
+4. If you haven't already, do the last 2 steps in a single statement using the pipe operator. 
+
+```{r}
+library(nycflights13)
+library(dplyr)
+
+flights_sorted <- flights %>%
+  mutate(time_gained = arr_delay - dep_delay) %>%
+  arrange(desc(time_gained))
+
+head(flights_sorted)
+
+
+```
+
+5. Make a histogram of the amount of time gained using the `hist()` function
+
+```{r}
+library(nycflights13)
+library(dplyr)
+
+flights <- flights %>%
+  mutate(time_gained = arr_delay - dep_delay)
+
+hist(flights$time_gained, 
+     main = "Histogram of Time Gained or Lost During Flight",
+     xlab = "Time Gained (minutes)",
+     ylab = "Frequency",
+     col = "pink",
+     border = "orange")
+
+```
+
+
+6. On average, did flights gain or lose time? Note: use the `na.rm = TRUE` argument to remove NA values from your aggregation
+
+```{r}
+library(nycflights13)
+library(dplyr)
+
+flights <- flights %>%
+  mutate(time_gained = arr_delay - dep_delay)
+
+average_time_gained <- mean(flights$time_gained, na.rm = TRUE)
+
+average_time_gained
+
+
+```
+
+
+7. Create a data.frame of flights with a destination of Hobby Airport (Airport code 'HOU'), only including the origin, destination, and the "made_up_time" column you just created
+
+```{r}
+library(nycflights13)
+library(dplyr)
+
+hou_flights <- flights %>%
+  mutate(time_gained = arr_delay - dep_delay) %>%
+  filter(dest == "HOU") %>%
+  select(origin, dest, time_gained)
+
+head(hou_flights)
+
+```
+
+
+8. On average, did flights to SeaTac gain or lose time?
+
+
+```{r}
+library(nycflights13)
+library(dplyr)
+
+average_time_gained_sea <- flights %>%
+  mutate
+
+
+```
+
+  
+## Exercise: 
+
+
+Go back to our flights exercise data. Consider flights from JFK to SEA. What was the average, min, and max air time of those flights? Use pipes to answer this question in one statement (without showing any other data)!
+
+```{r}
+library(nycflights13)
+library(dplyr)
+
+jfk_to_sea_stats <- flights %>%
+  filter(origin == "JFK", dest == "SEA") %>%
+  summarise(
+    avg_air_time = mean(air_time, na.rm = TRUE),
+    min_air_time = min(air_time, na.rm = TRUE),
+    max_air_time = max(air_time, na.rm = TRUE)
+  )
+
+jfk_to_sea_stats
+
+
+```
+
+Consider flights coming into Houston (HOU and IAH). What is the mean arrival delay by departure airport? 
+
+```{r}
+library(nycflights13)
+library(dplyr)
+
+houston_arrival_delays <- flights %>%
+  filter(dest %in% c("HOU", "IAH")) %>%  
+  group_by(origin) %>%  
+  summarise(mean_arr_delay = mean(arr_delay, na.rm = TRUE))  
+
+houston_arrival_delays
+
+
+```
+
+Getting ready for next class: Create a list of all the different values for the destination airport.
+
+```{r}
+library(nycflights13)
+library(dplyr)
+
+destination_airports <- flights %>%
+  distinct(dest) %>%
+  arrange(dest)
+
+destination_airports
+
+
+```
+
+Hmm... I don't know about you, but it sure does seem like there are some values here I don't recognize! 
+
+
+## Lab for the day:
+
+
+In the package `dplyr` there is a dataset called `starwars`. 
+
+```{r}
+glimpse(starwars)
+```
+
+
+We're going to use this to practice some data wrangling with `dplyr`. 
+
+First, we filter by species to only see the humans, and use that subset to plot a scatter plot of their height and mass.  
+
+```{r}
+humans <- starwars %>% filter(species == "Human")
+plot(humans$height, humans$mass)
+
+starwars %>% filter(species == "Human") %>% plot(mass ~ height, data = .)
+
+```
+
+Now, change this to see the same plot for the Droids. 
+
+```{r}
+ggplot(humans, aes(x = height, y = mass)) +
+  geom_point(color = "red") +
+  labs(title = "Height vs Mass of Humans in Star Wars",
+       x = "Height (cm)",
+       y = "Mass (kg)")
+
+
+
+```
+
+
+How many characters are from each planet?
+
+```{r}
+library(dplyr)
+
+planet_counts <- starwars %>%
+  group_by(homeworld) %>%  
+  summarise(character_count = n()) %>%  
+  arrange(desc(character_count)) 
+
+planet_counts
+
+
+
+```
+
+If you wanted to arrange this in descending order, what would you add to the pipe? 
+
+```{r}
+planet_counts <- starwars %>%
+  filter(!is.na(homeworld)) %>%  
+  group_by(homeworld) %>%
+  summarise(character_count = n()) %>%
+  arrange(desc(character_count))
+
+planet_counts
+
+```
+
+Find the average height for each eye color. You might find some of the answers to be strange, but keep going! 
+
+```{r}
+library(dplyr)
+
+eye_color_avg_height <- starwars %>%
+  group_by(eye_color) %>%  
+  summarise(avg_height = mean(height, na.rm = TRUE)) %>%  
+  arrange(desc(avg_height))  
+
+eye_color_avg_height
+
+
+
+```
+
+So.... What's with the NAs? Filter down to just brown eyes find out what's going on. 
+
+
+```{r}
+library(dplyr)
+
+brown_eyes <- starwars %>%
+  filter(eye_color == "brown") %>%  
+  select(name, height)  
+
+brown_eyes
+
+
+
+
+```
+
+
+
+
+
+
+Okay, so we have missing data here. Try summarising with `na.omit(height)` instead of just `height` or adding `na.rm = T` to the mean function inside summarize. 
+
+
+```{r}
+eye_color_avg_height <- starwars %>%
+  filter(!is.na(height)) %>%  
+  group_by(eye_color) %>%
+  summarise(avg_height = mean(height)) %>%
+  arrange(desc(avg_height))
+
+eye_color_avg_height
+
+
+```
+
+So, who is the tallest male? How many blue eyed women are there? How many genders are there? Answer these questions and spend some time asking and answering some of your own. 
+
+
+```{r}
+library(dplyr)
+
+tallest_male <- starwars %>%
+  filter(gender == "masculine", !is.na(height)) %>%  
+  filter(height == max(height)) %>%  
+  select(name, height, species, homeworld)
+
+tallest_male
+
+
+
+
+
+
+
+
+
+
+```
+
+```{r}
+# Blue-eyed women 
+blue_eyed_women_count <- starwars %>%
+  filter(gender == "feminine", eye_color == "blue") %>%  
+  summarise(count = n())  
+
+blue_eyed_women_count
+
+```
+
+```{r}
+# Genders
+unique_genders <- starwars %>%
+  distinct(gender) 
+
+unique_genders
+
+```
